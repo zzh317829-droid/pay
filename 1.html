@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>延时费缴纳系统</title>
+    <style>
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
+            font-family:"Microsoft YaHei", sans-serif;
+        }
+        body{
+            background:#f5f7fa;
+            min-height:100vh;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            padding:20px;
+        }
+        .page{
+            width:100%;
+            max-width:500px;
+            background:#fff;
+            border-radius:12px;
+            box-shadow:0 2px 12px rgba(0,0,0,0.1);
+            padding:35px 30px;
+            display:none;
+        }
+        .page.active{
+            display:block;
+        }
+        h2{
+            text-align:center;
+            color:#333;
+            margin-bottom:30px;
+        }
+        h3{
+            color:#333;
+            margin:25px 0 15px;
+            font-size:16px;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+        }
+        .form-item{
+            margin-bottom:20px;
+        }
+        label{
+            display:block;
+            color:#666;
+            margin-bottom:8px;
+        }
+        input{
+            width:100%;
+            height:44px;
+            padding:0 15px;
+            border:1px solid #ddd;
+            border-radius:6px;
+        }
+        .btn-group{
+            display:flex;
+            gap:12px;
+            margin-top:10px;
+        }
+        button{
+            width:100%;
+            height:45px;
+            border:none;
+            border-radius:6px;
+            font-size:16px;
+            cursor:pointer;
+            transition:all 0.2s;
+        }
+        button:disabled{
+            background:#ccc!important;
+            cursor:not-allowed;
+        }
+        .btn-primary{
+            background:#409eff;
+            color:#fff;
+        }
+        .btn-success{
+            background:#07c160;
+            color:#fff;
+        }
+        .btn-default{
+            background:#909399;
+            color:#fff;
+        }
+        .btn-warning{
+            background:#e6a23c;
+            color:#fff;
+        }
+        .btn-danger{
+            background:#f56c6c;
+            color:#fff;
+        }
+        .btn-small{
+            width:auto;
+            height:30px;
+            padding:0 10px;
+            font-size:12px;
+        }
+        .amount-box{
+            text-align:center;
+            padding:30px 0;
+            margin:20px 0;
+            background:#f0f9ff;
+            border-radius:8px;
+        }
+        .amount-title{
+            color:#666;
+            font-size:15px;
+            margin-bottom:10px;
+        }
+        .amount-num{
+            color:#f56c6c;
+            font-size:36px;
+            font-weight:700;
+        }
+        .pay-info{
+            background:#f5f7fa;
+            padding:15px;
+            border-radius:6px;
+            margin:20px 0;
+        }
+        .pay-info p{
+            color:#666;
+            margin:8px 0;
+        }
+        .toast{
+            position:fixed;
+            top:50%;
+            left:50%;
+            transform:translate(-50%,-50%);
+            background:rgba(0,0,0,0.75);
+            color:#fff;
+            padding:12px 20px;
+            border-radius:6px;
+            z-index:9999;
+            display:none;
+        }
+        .toast.show{
+            display:block;
+        }
+        .home-btn{
+            margin-bottom:20px;
+            height:55px;
+            font-size:17px;
+        }
+        /* 列表样式优化 */
+        .user-list,.order-list{
+            max-height:400px;
+            overflow-y:auto;
+            margin:15px 0;
+            border:1px solid #ddd;
+            border-radius:6px;
+        }
+        .user-item,.order-item{
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            padding:10px 15px;
+            border-bottom:1px solid #f0f0f0;
+        }
+        .user-item:last-child,.order-item:last-child{
+            border-bottom:none;
+        }
+        .user-item:hover,.order-item:hover{
+            background:#fafafa;
+        }
+        .item-content{
+            flex:1;
+        }
+        .item-btn-group{
+            display:flex;
+            gap:8px;
+            flex-shrink:0;
+        }
+        .status-tag{
+            padding:3px 8px;
+            border-radius:4px;
+            font-size:12px;
+        }
+        .status-wait{
+            background:#fdf6ec;
+            color:#e6a23c;
+        }
+        .status-success{
+            background:#f0f9ff;
+            color:#07c160;
+        }
+        .pay-modal{
+            position:fixed;
+            top:0;
+            left:0;
+            width:100%;
+            height:100%;
+            background:rgba(0,0,0,0.7);
+            display:none;
+            align-items:center;
+            justify-content:center;
+            z-index:9998;
+        }
+        .pay-modal-box{
+            background:#fff;
+            border-radius:12px;
+            padding:30px;
+            max-width:350px;
+            width:90%;
+            text-align:center;
+        }
+        .pay-code-img{
+            width:250px;
+            height:250px;
+            margin:0 auto 20px;
+            display:block;
+            border:1px solid #eee;
+        }
+        .search-box{
+            display:flex;
+            gap:10px;
+            margin-bottom:15px;
+        }
+        .search-box input{
+            margin:0;
+        }
+        .search-box button{
+            width:120px;
+            flex-shrink:0;
+        }
+        .data-count{
+            color:#999;
+            font-size:12px;
+            font-weight:normal;
+        }
+        .batch-btn-group{
+            display:flex;
+            gap:10px;
+            margin-bottom:15px;
+            flex-wrap:wrap;
+        }
+        .batch-btn-group button{
+            flex:1;
+            height:35px;
+            font-size:14px;
+            min-width:120px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 全局提示框 -->
+    <div class="toast" id="toast"></div>
+
+    <!-- 1. 首页 -->
+    <div class="page active" id="homePage">
+        <h2>延时费缴纳系统</h2>
+        <p style="text-align:center;color:#999;margin-bottom:30px">官方缴费通道 | 安全支付</p>
+        <button class="btn-primary home-btn" onclick="go('userLoginPage')">用户缴费入口</button>
+        <button class="btn-warning home-btn" onclick="go('adminLoginPage')">管理后台</button>
+    </div>
+
+    <!-- 2. 用户身份验证页 -->
+    <div class="page" id="userLoginPage">
+        <h2>用户身份验证</h2>
+        <div class="form-item">
+            <label>姓名</label>
+            <input id="userName" placeholder="请输入您的真实姓名">
+        </div>
+        <div class="form-item">
+            <label>身份证号</label>
+            <input id="userIdCard" placeholder="请输入18位身份证号" maxlength="18">
+        </div>
+        <div class="btn-group">
+            <button class="btn-default" onclick="go('homePage')">返回首页</button>
+            <button class="btn-primary" onclick="userLogin()">下一步</button>
+        </div>
+    </div>
+
+    <!-- 3. 用户缴费页 -->
+    <div class="page" id="payPage">
+        <h2>延时费缴纳</h2>
+        <div class="amount-box">
+            <div class="amount-title">待缴纳延时费</div>
+            <div class="amount-num">¥<span id="payAmount">0.00</span></div>
+        </div>
+        <div class="pay-info">
+            <p>缴费人：<span id="showUserName"></span></p>
+            <p>身份证号：<span id="showUserIdCard"></span></p>
+            <p>收款方：<span id="showReceiveName"></span></p>
+        </div>
+        <div class="btn-group">
+            <button class="btn-default" onclick="userLogout()">退出登录</button>
+            <button class="btn-success" id="payBtn" onclick="openPayModal()">微信支付</button>
+        </div>
+    </div>
+
+    <!-- 4. 管理员登录页 -->
+    <div class="page" id="adminLoginPage">
+        <h2>管理后台登录</h2>
+        <div class="form-item">
+            <label>管理员账号</label>
+            <input id="adminAccount" placeholder="请输入管理员账号">
+        </div>
+        <div class="form-item">
+            <label>管理员密码</label>
+            <input id="adminPwd" type="password" placeholder="请输入管理员密码">
+        </div>
+        <div class="btn-group">
+            <button class="btn-default" onclick="go('homePage')">返回首页</button>
+            <button class="btn-primary" onclick="adminLogin()">登录</button>
+        </div>
+    </div>
+
+    <!-- 5. 管理员后台页（全功能） -->
+    <div class="page" id="adminPage">
+        <h2>管理后台</h2>
+        
+        <h3>收款账户设置</h3>
+        <div class="form-item">
+            <label>微信收款账户名称</label>
+            <input id="receiveNameInput" placeholder="请输入收款微信账户名称">
+        </div>
+        <button class="btn-primary" onclick="saveReceiveName()">保存收款账户</button>
+
+        <h3>用户信息&缴费金额管理 <span id="userCount" class="data-count">共0个用户</span></h3>
+        <div class="form-item">
+            <label>用户姓名</label>
+            <input id="addUserName" placeholder="请输入用户姓名">
+        </div>
+        <div class="form-item">
+            <label>用户身份证号</label>
+            <input id="addUserIdCard" placeholder="请输入18位身份证号" maxlength="18">
+        </div>
+        <div class="form-item">
+            <label>应缴延时费金额（元）</label>
+            <input id="addUserAmount" type="number" placeholder="请输入应缴金额" min="0" step="0.01">
+        </div>
+        <button class="btn-primary" onclick="addUser()">添加/修改用户</button>
+
+        <!-- 用户列表 -->
+        <div class="user-list" id="userList"></div>
+        <!-- 批量操作用户按钮 -->
+        <div class="batch-btn-group">
+            <button class="btn-danger" onclick="clearAllUser()">一键清空所有用户</button>
+        </div>
+
+        <h3>缴费订单检索&管理 <span id="orderCount" class="data-count">共0个订单</span></h3>
+        <div class="search-box">
+            <input id="searchKey" placeholder="输入姓名/身份证号检索订单">
+            <button class="btn-primary" onclick="searchOrder()">检索</button>
+        </div>
+        <!-- 批量操作订单按钮 -->
+        <div class="batch-btn-group">
+            <button class="btn-success" onclick="exportOrderToExcel()">导出订单Excel</button>
+            <button class="btn-danger" onclick="clearAllOrder()">一键清空所有订单</button>
+        </div>
+        <!-- 订单列表 -->
+        <div class="order-list" id="orderList"></div>
+
+        <button class="btn-default" style="margin-top:20px" onclick="adminLogout()">退出后台</button>
+    </div>
+
+    <!-- 微信支付弹窗 -->
+    <div class="pay-modal" id="payModal">
+        <div class="pay-modal-box">
+            <h3>微信扫码支付</h3>
+            <p>订单号：<span id="orderNo"></span></p>
+            <p>待支付金额：¥<span id="modalAmount">0.00</span></p>
+            <img src="pay.JPG" class="pay-code-img" id="payCode">
+            <p style="color:#666;font-size:14px;margin-bottom:15px">请用微信扫码完成付款，管理员确认后自动完成缴费</p>
+            <div class="btn-group">
+                <button class="btn-default" onclick="closePayModal()">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let currentUser = null; // 当前登录用户
+        let currentOrder = null; // 当前支付订单
+
+        // 本地存储数据初始化
+        function initData() {
+            if(!localStorage.getItem('userList')) localStorage.setItem('userList', JSON.stringify([]));
+            if(!localStorage.getItem('orderList')) localStorage.setItem('orderList', JSON.stringify([]));
+            if(!localStorage.getItem('receiveName')) localStorage.setItem('receiveName', '白日曛(**桦)');
+        }
+
+        // 页面切换
+        function go(pageId) {
+            document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+        }
+
+        // 全局提示框
+        function toast(msg, duration=2000) {
+            const toastDom = document.getElementById('toast');
+            toastDom.textContent = msg;
+            toastDom.classList.add('show');
+            setTimeout(() => toastDom.classList.remove('show'), duration);
+        }
+
+        // 生成唯一订单号
+        function createOrderNo() {
+            const time = Date.now().toString();
+            const random = Math.floor(Math.random()*1000).toString().padStart(3,'0');
+            return 'PAY' + time + random;
+        }
+
+        // ------------------- 用户端核心逻辑 -------------------
+        // 用户登录验证
+        function userLogin() {
+            const name = document.getElementById('userName').value.trim();
+            const idCard = document.getElementById('userIdCard').value.trim();
+            if(!name || !idCard) return toast('请填写完整的姓名和身份证号');
+            if(idCard.length !== 18) return toast('请输入正确的18位身份证号');
+
+            const userList = JSON.parse(localStorage.getItem('userList'));
+            const findUser = userList.find(user => user.name === name && user.idCard === idCard);
+            if(!findUser) return toast('身份信息不匹配，请重新输入');
+
+            currentUser = findUser;
+            // 填充缴费页面信息
+            document.getElementById('payAmount').textContent = findUser.amount;
+            document.getElementById('showUserName').textContent = findUser.name;
+            document.getElementById('showUserIdCard').textContent = findUser.idCard;
+            document.getElementById('showReceiveName').textContent = localStorage.getItem('receiveName');
+            // 控制支付按钮状态
+            document.getElementById('payBtn').disabled = parseFloat(findUser.amount) <= 0;
+            go('payPage');
+            toast('身份验证成功');
+        }
+
+        // 打开支付弹窗（防重复订单）
+        function openPayModal() {
+            if(!currentUser) return toast('用户信息异常，请重新登录');
+            if(parseFloat(currentUser.amount) <= 0) return toast('您暂无待缴纳费用');
+
+            const orderList = JSON.parse(localStorage.getItem('orderList'));
+            // 检查该用户是否已有未完成的订单，有就直接复用，不生成新订单
+            const existUnfinishOrder = orderList.find(order => 
+                order.idCard === currentUser.idCard && order.status === 'wait'
+            );
+
+            if(existUnfinishOrder) {
+                currentOrder = existUnfinishOrder;
+                document.getElementById('orderNo').textContent = existUnfinishOrder.orderNo;
+                document.getElementById('modalAmount').textContent = existUnfinishOrder.amount;
+                document.getElementById('payModal').style.display = 'flex';
+                toast('已加载您的待支付订单');
+            } else {
+                // 生成新订单
+                const orderNo = createOrderNo();
+                currentOrder = {
+                    orderNo: orderNo,
+                    name: currentUser.name,
+                    idCard: currentUser.idCard,
+                    amount: currentUser.amount,
+                    status: 'wait', // wait:待付款 success:已完成缴费
+                    createTime: new Date().toLocaleString()
+                };
+                orderList.push(currentOrder);
+                localStorage.setItem('orderList', JSON.stringify(orderList));
+                // 填充弹窗信息
+                document.getElementById('orderNo').textContent = orderNo;
+                document.getElementById('modalAmount').textContent = currentUser.amount;
+                document.getElementById('payModal').style.display = 'flex';
+                toast('支付订单已生成，请扫码付款');
+                // 刷新后台订单列表
+                renderOrderList();
+            }
+        }
+
+        // 关闭支付弹窗
+        function closePayModal() {
+            document.getElementById('payModal').style.display = 'none';
+            currentOrder = null;
+        }
+
+        // 用户退出登录
+        function userLogout() {
+            currentUser = null;
+            currentOrder = null;
+            document.getElementById('userName').value = '';
+            document.getElementById('userIdCard').value = '';
+            go('homePage');
+            toast('已退出登录');
+        }
+
+        // ------------------- 管理员端核心逻辑 -------------------
+        // 管理员登录
+        function adminLogin() {
+            const account = document.getElementById('adminAccount').value.trim();
+            const pwd = document.getElementById('adminPwd').value.trim();
+            if(account === 'admin' && pwd === '123456') {
+                document.getElementById('receiveNameInput').value = localStorage.getItem('receiveName');
+                renderUserList();
+                renderOrderList();
+                go('adminPage');
+                toast('登录成功');
+            } else {
+                toast('账号或密码错误');
+            }
+        }
+
+        // 保存收款账户
+        function saveReceiveName() {
+            const name = document.getElementById('receiveNameInput').value.trim();
+            if(!name) return toast('请输入收款账户名称');
+            localStorage.setItem('receiveName', name);
+            toast('收款账户保存成功');
+        }
+
+        // 添加/修改用户
+        function addUser() {
+            const name = document.getElementById('addUserName').value.trim();
+            const idCard = document.getElementById('addUserIdCard').value.trim();
+            let amount = document.getElementById('addUserAmount').value.trim();
+            if(!name || !idCard) return toast('请填写完整的用户信息');
+            if(idCard.length !== 18) return toast('请输入正确的18位身份证号');
+            amount = !amount || isNaN(parseFloat(amount)) ? '0.00' : parseFloat(amount).toFixed(2);
+
+            const userList = JSON.parse(localStorage.getItem('userList'));
+            const findIndex = userList.findIndex(user => user.idCard === idCard);
+            if(findIndex !== -1) {
+                userList[findIndex].name = name;
+                userList[findIndex].amount = amount;
+                toast('用户信息修改成功');
+            } else {
+                userList.push({ name, idCard, amount });
+                toast('用户添加成功');
+            }
+            localStorage.setItem('userList', JSON.stringify(userList));
+            renderUserList();
+            // 清空输入框
+            document.getElementById('addUserName').value = '';
+            document.getElementById('addUserIdCard').value = '';
+            document.getElementById('addUserAmount').value = '';
+        }
+
+        // 渲染用户列表（带删除按钮）
+        function renderUserList() {
+            const userList = JSON.parse(localStorage.getItem('userList'));
+            const dom = document.getElementById('userList');
+            const countDom = document.getElementById('userCount');
+            countDom.textContent = `共${userList.length}个用户`;
+
+            if(userList.length === 0) {
+                dom.innerHTML = '<p style="text-align:center;padding:20px;color:#999">暂无用户数据</p>';
+                return;
+            }
+            let html = '';
+            userList.forEach(user => {
+                html += `
+                <div class="user-item">
+                    <div class="item-content">
+                        <div>${user.name}</div>
+                        <div style="font-size:12px;color:#999">${user.idCard}</div>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:10px">
+                        <span style="color:#f56c6c;font-weight:600">¥${user.amount}</span>
+                        <button class="btn-danger btn-small" onclick="deleteUser('${user.idCard}')">删除</button>
+                    </div>
+                </div>
+                `;
+            });
+            dom.innerHTML = html;
+        }
+
+        // 删除单个用户
+        function deleteUser(idCard) {
+            if(!confirm('确定要删除该用户吗？删除后无法恢复')) return;
+            const userList = JSON.parse(localStorage.getItem('userList'));
+            const newUserList = userList.filter(user => user.idCard !== idCard);
+            localStorage.setItem('userList', JSON.stringify(newUserList));
+            renderUserList();
+            toast('用户删除成功');
+        }
+
+        // 一键清空所有用户
+        function clearAllUser() {
+            if(!confirm('确定要清空所有用户吗？此操作不可恢复！')) return;
+            localStorage.setItem('userList', JSON.stringify([]));
+            renderUserList();
+            toast('所有用户已清空');
+        }
+
+        // 渲染订单列表（带删除按钮+管理员确认缴费）
+        function renderOrderList(searchKey='') {
+            const orderList = JSON.parse(localStorage.getItem('orderList'));
+            const dom = document.getElementById('orderList');
+            const countDom = document.getElementById('orderCount');
+            // 检索过滤
+            let filterList = orderList;
+            if(searchKey) {
+                filterList = orderList.filter(order => 
+                    order.name.includes(searchKey) || order.idCard.includes(searchKey)
+                );
+            }
+            // 按时间倒序
+            filterList.reverse();
+            countDom.textContent = `共${filterList.length}个订单`;
+
+            if(filterList.length === 0) {
+                dom.innerHTML = '<p style="text-align:center;padding:20px;color:#999">暂无订单数据</p>';
+                return;
+            }
+            let html = '';
+            filterList.forEach(order => {
+                // 状态标签&按钮
+                let statusHtml = '';
+                let btnHtml = '';
+                if(order.status === 'wait') {
+                    statusHtml = '<span class="status-tag status-wait">待付款</span>';
+                    btnHtml = `
+                    <div class="item-btn-group">
+                        <button class="btn-success btn-small" onclick="confirmPaySuccess('${order.orderNo}')">确认缴费成功</button>
+                        <button class="btn-danger btn-small" onclick="deleteOrder('${order.orderNo}')">删除</button>
+                    </div>
+                    `;
+                } else {
+                    statusHtml = '<span class="status-tag status-success">已完成缴费</span>';
+                    btnHtml = `
+                    <div class="item-btn-group">
+                        <button class="btn-danger btn-small" onclick="deleteOrder('${order.orderNo}')">删除</button>
+                    </div>
+                    `;
+                }
+
+                html += `
+                <div class="order-item">
+                    <div class="item-content">
+                        <div>订单号：${order.orderNo} ${statusHtml}</div>
+                        <div style="font-size:12px;color:#666">${order.name} | ${order.idCard} | 金额：¥${order.amount}</div>
+                        <div style="font-size:12px;color:#999">创建时间：${order.createTime}</div>
+                    </div>
+                    ${btnHtml}
+                </div>
+                `;
+            });
+            dom.innerHTML = html;
+        }
+
+        // 检索订单
+        function searchOrder() {
+            const key = document.getElementById('searchKey').value.trim();
+            renderOrderList(key);
+        }
+
+        // 管理员确认缴费成功
+        function confirmPaySuccess(orderNo) {
+            if(!confirm('确定已收到该笔款项，确认缴费成功吗？')) return;
+            const orderList = JSON.parse(localStorage.getItem('orderList'));
+            const userList = JSON.parse(localStorage.getItem('userList'));
+            // 找到对应订单
+            const orderIndex = orderList.findIndex(order => order.orderNo === orderNo);
+            const targetOrder = orderList[orderIndex];
+            // 更新订单状态为已完成
+            orderList[orderIndex].status = 'success';
+            localStorage.setItem('orderList', JSON.stringify(orderList));
+            // 同步清空对应用户的待缴金额
+            const userIndex = userList.findIndex(user => user.idCard === targetOrder.idCard);
+            if(userIndex !== -1) {
+                userList[userIndex].amount = '0.00';
+                localStorage.setItem('userList', JSON.stringify(userList));
+            }
+            // 刷新列表
+            renderOrderList();
+            renderUserList();
+            toast('已确认缴费成功，订单已完成');
+        }
+
+        // 删除单个订单
+        function deleteOrder(orderNo) {
+            if(!confirm('确定要删除该订单吗？删除后无法恢复')) return;
+            const orderList = JSON.parse(localStorage.getItem('orderList'));
+            const newOrderList = orderList.filter(order => order.orderNo !== orderNo);
+            localStorage.setItem('orderList', JSON.stringify(newOrderList));
+            renderOrderList();
+            toast('订单删除成功');
+        }
+
+        // 一键清空所有订单
+        function clearAllOrder() {
+            if(!confirm('确定要清空所有订单吗？此操作不可恢复！')) return;
+            localStorage.setItem('orderList', JSON.stringify([]));
+            renderOrderList();
+            toast('所有订单已清空');
+        }
+
+        // 一键导出订单为Excel
+        function exportOrderToExcel() {
+            const orderList = JSON.parse(localStorage.getItem('orderList'));
+            if(orderList.length === 0) return toast('暂无订单数据，无法导出');
+            
+            // 定义Excel表头
+            let excelContent = "订单号,姓名,身份证号,缴费金额(元),缴费状态,创建时间\n";
+            // 填充订单数据
+            orderList.forEach(order => {
+                const status = order.status === 'success' ? '已完成缴费' : '待付款';
+                // 处理身份证号，避免Excel自动变成科学计数法
+                const idCard = `\t${order.idCard}`;
+                excelContent += `${order.orderNo},${order.name},${idCard},${order.amount},${status},${order.createTime}\n`;
+            });
+
+            // 生成Excel文件（兼容Excel的CSV格式）
+            const blob = new Blob(['\uFEFF' + excelContent], { type: 'application/vnd.ms-excel;charset=utf-8' });
+            const downloadUrl = URL.createObjectURL(blob);
+            const aTag = document.createElement('a');
+            aTag.href = downloadUrl;
+            aTag.download = `延时费缴费订单详情_${new Date().toLocaleDateString().replace(/\//g,'-')}.csv`;
+            document.body.appendChild(aTag);
+            aTag.click();
+            document.body.removeChild(aTag);
+            URL.revokeObjectURL(downloadUrl);
+            toast('订单Excel导出成功');
+        }
+
+        // 管理员退出登录
+        function adminLogout() {
+            document.getElementById('adminAccount').value = '';
+            document.getElementById('adminPwd').value = '';
+            go('homePage');
+            toast('已退出后台');
+        }
+
+        // 页面加载初始化
+        window.onload = initData;
+    </script>
+</body>
+</html>
